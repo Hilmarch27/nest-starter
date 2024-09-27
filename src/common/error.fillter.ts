@@ -16,9 +16,22 @@ export class ErrorFilter implements ExceptionFilter {
         errors: exception.getResponse(),
       });
     } else if (exception instanceof ZodError) {
-      response.status(400).json({
-        errors: 'Validation error',
-      });
+      if (process.env.NODE_ENV === 'development') {
+        // Detailed error in development mode
+        const zodErrors = exception.errors.map((err) => ({
+          path: err.path.join('.'),
+          message: err.message,
+        }));
+
+        response.status(400).json({
+          errors: zodErrors,
+        });
+      } else {
+        // Generic error message in production mode
+        response.status(400).json({
+          errors: 'Validation error',
+        });
+      }
     } else {
       response.status(500).json({
         errors: exception.message,
